@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -23,9 +24,13 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.example.blinkstory.model.repository.DownloadFileAsynTask;
+import com.example.blinkstory.presenter.DownloadFilePresenter;
+import com.example.blinkstory.view.IDownloadFileView;
 import com.google.android.material.snackbar.Snackbar;
 import com.r0adkll.slidr.Slidr;
 import com.r0adkll.slidr.model.SlidrInterface;
@@ -43,7 +48,7 @@ import java.net.URL;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class ViewVideoElementActivity extends AppCompatActivity {
+public class ViewVideoElementActivity extends AppCompatActivity implements IDownloadFileView {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -93,6 +98,10 @@ public class ViewVideoElementActivity extends AppCompatActivity {
     private SlidrInterface slidr;
     //button
     private ImageButton btnDownload;
+    //process bar
+    private ProgressBar mProgressBar;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -136,55 +145,18 @@ public class ViewVideoElementActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
     private void blindListenerUi() {
+        final IDownloadFileView mIDownloadFileView = this;
         btnDownload.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(final View view) {
-
-                //add loading item
-                new Handler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        downloadVideo(view);
-                    }
-
-
-                });
+            public void onClick( View view) {
+               downloadVideo();
 
             }
-            private void downloadVideo(View view) {
-                try {
-                    URL u = new URL(getIntentData());
-                    InputStream is = u.openStream();
-
-                    DataInputStream dis = new DataInputStream(is);
-
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    File file = new File(Environment.getExternalStorageDirectory() + "/" + getIdData()+".mp4");
-                    FileOutputStream fos = new FileOutputStream(file);
-                    while ((length = dis.read(buffer))>0) {
-                        fos.write(buffer, 0, length);
-                    }
-                    addVideo(file);
-                    Snackbar.make(view, "Download Success !!", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-
-                } catch (MalformedURLException mue) {
-                    Log.e("SYNC getUpdate", "malformed url error", mue);
-                } catch (IOException ioe) {
-                    Log.e("SYNC getUpdate", "io error", ioe);
-                } catch (SecurityException se) {
-                    Log.e("SYNC getUpdate", "security error", se);
-                }
-
+            private void downloadVideo() {
+                new DownloadFilePresenter(mIDownloadFileView,getIdData(),getIntentData(),mProgressBar)
+                        .setOnDownloadTask();
             }
-            public Uri addVideo(File videoFile) {
-                ContentValues values = new ContentValues(3);
-                values.put(MediaStore.Video.Media.TITLE, "My video title");
-                values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-                values.put(MediaStore.Video.Media.DATA, videoFile.getAbsolutePath());
-                return getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-            }
+
 
         });
     }
@@ -218,6 +190,7 @@ public class ViewVideoElementActivity extends AppCompatActivity {
         videoContent.setVideoPath(getIntentData());
         videoContent.start();
         btnDownload = (ImageButton)findViewById(R.id.btnDownloadVideo);
+        mProgressBar = (ProgressBar)findViewById(R.id.spinner_loading_view_element);
 
     }
     private String getIntentData(){
@@ -240,12 +213,31 @@ public class ViewVideoElementActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onSusscess(File file) {
+        addVideo(file);
+        Snackbar.make(getWindow().getDecorView().getRootView(), "Download complete !!", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+    }
+
+    @Override
+    public void onFailed(String msg) {
+        Snackbar.make(getWindow().getDecorView().getRootView(), "Download Failed !!", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+    }
+
+    public Uri addVideo(File videoFile) {
+        MediaPlayer mp = MediaPlayer.create(this, Uri.parse(videoFile.getAbsolutePath()));
+        int duration = mp.getDuration();
+        ContentValues values = new ContentValues(3);
+        values.put(MediaStore.Video.Media.TITLE, "My video title");
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
+        values.put(MediaStore.Video.Media.DATA, videoFile.getAbsolutePath());
+        values.put(MediaStore.Video.Media.DURATION, duration);
+        return getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
 
 
-
-
-
-
+    }
     /**
      * Schedules a call to hide() in delay milliseconds, canceling any
      * previously scheduled calls.

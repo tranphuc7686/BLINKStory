@@ -9,18 +9,20 @@
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <ProgressBar
-        android:id="@+id/spinner_loading_view_element"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_gravity ="center"
-        android:layout_centerInParent="true"/>
+
     <VideoView
         android:id="@+id/fullscreen_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity ="center_vertical"
         android:keepScreenOn="true" />
+    <ProgressBar
+        android:id="@+id/spinner_loading_view_element"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity ="center"
+        android:visibility="gone"
+        android:layout_centerInParent="true"/>
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->

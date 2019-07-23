@@ -1,17 +1,23 @@
 package com.example.blinkstory;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
+import com.example.blinkstory.presenter.IUploadFilePresenter;
+import com.example.blinkstory.presenter.UploadFilePresenter;
+import com.example.blinkstory.view.IUploadView;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.loader.content.CursorLoader;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +25,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.appcompat.widget.Toolbar;
 
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -46,7 +53,7 @@ import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class ElementActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener, IElementView {
+public class ElementActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener, IElementView, IUploadView {
 
     private StaggeredGridLayoutManager gridLayoutManager;
     //setup toolbar
@@ -314,12 +321,84 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IUploadView iUploadView = this;
         if (resultCode != RESULT_OK) return;
         if (requestCode == PICK_FROM_GALLERY) {
             Uri aa = data.getData();
-            String mVideoURI = Uri.parse(String.valueOf(aa)).getPath();
-            System.out.println(mVideoURI+ " fjpdoskfpsofđ");
+            String mVideoURI =getPath(this,aa);
+            new UploadFilePresenter(iUploadView,spinner).setOnUploadFileTask(mVideoURI);
+
         }
+        // Get Path of selected image
+
+    }
+    public static String getPath(final Context context, final Uri uri) {
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >=
+                Build.VERSION_CODES.KITKAT;
+        Log.i("URI",uri+"");
+        String result = uri+"";
+        // DocumentProvider
+        //  if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+        if (isKitKat && (result.contains("media.documents"))) {
+
+            String[] ary = result.split("/");
+            int length = ary.length;
+            String imgary = ary[length-1];
+            final String[] dat = imgary.split("%3A");
+
+            final String docId = dat[1];
+            final String type = dat[0];
+
+            Uri contentUri = null;
+            if ("image".equals(type)) {
+                contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            } else if ("video".equals(type)) {
+
+            } else if ("audio".equals(type)) {
+            }
+
+            final String selection = "_id=?";
+            final String[] selectionArgs = new String[] {
+                    dat[1]
+            };
+
+            return getDataColumn(context, contentUri, selection, selectionArgs);
+        }
+        else
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+
+    public static String getDataColumn(Context context, Uri uri, String selection,
+                                       String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {
+                column
+        };
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
     }
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int offset) {
@@ -347,4 +426,15 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     }
 
 
+    @Override
+    public void onSusscess() {
+        Snackbar.make(getWindow().getDecorView().getRootView(), "Upload Success !!", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+    }
+
+    @Override
+    public void onFailed(String msg) {
+        Snackbar.make(getWindow().getDecorView().getRootView(), "Upload Failed : "+msg+" !!", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+    }
 }
