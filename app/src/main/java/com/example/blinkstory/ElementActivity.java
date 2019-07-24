@@ -8,23 +8,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-
-import com.example.blinkstory.presenter.IUploadFilePresenter;
-import com.example.blinkstory.presenter.UploadFilePresenter;
-import com.example.blinkstory.view.IUploadView;
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.loader.content.CursorLoader;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import androidx.appcompat.widget.Toolbar;
-
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -36,15 +19,28 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.example.blinkstory.adapter.ElementRecyclerViewAdapter;
 import com.example.blinkstory.adapter.StaggerdSpacesItemDecoration;
 import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.model.entity.Element;
-import com.example.blinkstory.adapter.ElementRecyclerViewAdapter;
 import com.example.blinkstory.presenter.IElementPresenter;
 import com.example.blinkstory.presenter.IElementPresenterImpl;
 import com.example.blinkstory.presenter.OnLoadMoreListener;
 import com.example.blinkstory.presenter.RecyclerViewLoadMoreScroll;
+import com.example.blinkstory.presenter.UploadFilePresenter;
 import com.example.blinkstory.view.IElementView;
+import com.example.blinkstory.view.IUploadView;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.r0adkll.slidr.Slidr;
 import com.r0adkll.slidr.model.SlidrInterface;
 import com.squareup.picasso.Picasso;
@@ -88,7 +84,10 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     private CircleImageView mCircleImageView;
     private static final int PICK_IMAGE_FILE = 0;
     private static final int PICK_VIDEO_FILE = 0;
-    private static final int PICK_FROM_GALLERY = 777;
+    private static final int PICK_FROM_GALLERY_IMAGE = 777;
+    private static final int PICK_FROM_GALLERY_VIDEO = 778;
+    //id category
+    private int idCtg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,7 +112,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     private void init() {
         // getIntent() is a method from the started activity
         Intent myIntent = getIntent(); // gets the previously created intent
-        int idCtg = myIntent.getIntExtra(MainConstant.CATEGORY_ID_EXTRA, 0);
+        idCtg = myIntent.getIntExtra(MainConstant.CATEGORY_ID_EXTRA, 0);
         String thubCtg = myIntent.getStringExtra(MainConstant.CATEGORY_THUBMAIL_EXTRA);
         String nameCtg = myIntent.getStringExtra(MainConstant.CATEGORY_NAME_EXTRA);
         this.nameCtg.setText(nameCtg);
@@ -288,16 +287,16 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
                         .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                if ( itemSelected[0] == PICK_IMAGE_FILE) {
+                                if (itemSelected[0] == PICK_IMAGE_FILE) {
                                     Intent intent = new Intent();
                                     intent.setType("image/*");
                                     intent.setAction(Intent.ACTION_GET_CONTENT);
-                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY);
+                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_IMAGE);
                                 } else {
                                     Intent intent = new Intent();
                                     intent.setType("video/*");
                                     intent.setAction(Intent.ACTION_GET_CONTENT);
-                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY);
+                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_VIDEO);
                                 }
 
                             }
@@ -319,32 +318,37 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
             }
         });
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         IUploadView iUploadView = this;
         if (resultCode != RESULT_OK) return;
-        if (requestCode == PICK_FROM_GALLERY) {
-            Uri aa = data.getData();
-            String mVideoURI =getPath(this,aa);
-            new UploadFilePresenter(iUploadView,spinner).setOnUploadFileTask(mVideoURI);
-
+        Uri aa = data.getData();
+        String mVideoURI = getPath(this, aa);
+        if (requestCode == PICK_FROM_GALLERY_IMAGE) {
+            new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(mVideoURI, idCtg, 0);
+            return;
         }
+        new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(mVideoURI, idCtg, 1);
         // Get Path of selected image
 
     }
+
+
+
     public static String getPath(final Context context, final Uri uri) {
 
         final boolean isKitKat = Build.VERSION.SDK_INT >=
                 Build.VERSION_CODES.KITKAT;
-        Log.i("URI",uri+"");
-        String result = uri+"";
+        Log.i("URI", uri + "");
+        String result = uri + "";
         // DocumentProvider
         //  if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
         if (isKitKat && (result.contains("media.documents"))) {
 
             String[] ary = result.split("/");
             int length = ary.length;
-            String imgary = ary[length-1];
+            String imgary = ary[length - 1];
             final String[] dat = imgary.split("%3A");
 
             final String docId = dat[1];
@@ -354,19 +358,18 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
             if ("image".equals(type)) {
                 contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             } else if ("video".equals(type)) {
-
+                contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
             } else if ("audio".equals(type)) {
+                contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             }
 
             final String selection = "_id=?";
-            final String[] selectionArgs = new String[] {
+            final String[] selectionArgs = new String[]{
                     dat[1]
             };
 
             return getDataColumn(context, contentUri, selection, selectionArgs);
-        }
-        else
-        if ("content".equalsIgnoreCase(uri.getScheme())) {
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
             return getDataColumn(context, uri, null, null);
         }
         // File
@@ -400,6 +403,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         }
         return null;
     }
+
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int offset) {
         int maxScroll = appBarLayout.getTotalScrollRange();
@@ -434,7 +438,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
 
     @Override
     public void onFailed(String msg) {
-        Snackbar.make(getWindow().getDecorView().getRootView(), "Upload Failed : "+msg+" !!", Snackbar.LENGTH_LONG)
+        Snackbar.make(getWindow().getDecorView().getRootView(), "Upload Failed : " + msg + " !!", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
 }

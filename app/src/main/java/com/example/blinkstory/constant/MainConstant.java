@@ -11,4 +11,7 @@ public class MainConstant {
     public static final String CATEGORY_THUBMAIL_EXTRA = "categorythubmailextra";
     public static final String CATEGORY_NAME_EXTRA = "categorynamelextra";
     public static final String URL_UPLOAD_DATA = BASE_URL+"/datas/upload";
+    public static final String URL_ADD_DATA = BASE_URL;
+    public static final int TYPE_IMAGE = 0;
+    public static final int TYPE_VIDEO = 1;
 }

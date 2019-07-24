@@ -1,5 +1,6 @@
 package com.example.blinkstory.presenter;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.ProgressBar;
 
@@ -12,14 +13,15 @@ public class UploadFilePresenter implements IUploadFilePresenter {
     private ProgressBar mProgressBar;
     private IUploadFileAsyntask mIUploadFileAsyntask;
 
-    public UploadFilePresenter(IUploadView mIUploadView, ProgressBar mProgressBar) {
+
+    public UploadFilePresenter(IUploadView mIUploadView, ProgressBar mProgressBar,Context context) {
         this.mIUploadView = mIUploadView;
         this.mProgressBar = mProgressBar;
-        mIUploadFileAsyntask = new UploadFileAsyntask(this);
+        mIUploadFileAsyntask = new UploadFileAsyntask(this,context);
     }
 
-    public void setOnUploadFileTask(String pathFile){
-        mIUploadFileAsyntask.onUploadFileAsyntask(pathFile);
+    public void setOnUploadFileTask(String pathFile,int idCtg,int type) {
+        mIUploadFileAsyntask.onUploadFileAsyntask(pathFile,idCtg,type);
     }
 
 
