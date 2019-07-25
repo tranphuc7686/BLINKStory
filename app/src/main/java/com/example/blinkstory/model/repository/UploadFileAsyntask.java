@@ -3,6 +3,7 @@ package com.example.blinkstory.model.repository;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -44,12 +45,12 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
 
     @Override
     public void onUploadFileAsyntask(final String pathFile, int idCtg, final int typeData) {
-            if(typeData == MainConstant.TYPE_IMAGE){
-                PushImage(pathFile,idCtg);
-            }
-            else{
-                PushVideo(pathFile,idCtg);
-            }
+        if(typeData == MainConstant.TYPE_IMAGE){
+            PushImage(pathFile,idCtg);
+        }
+        else{
+            PushVideo(pathFile,idCtg);
+        }
     }
 
     public byte[] getFileDataFromDrawable(String path) {
@@ -71,7 +72,17 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
     }
 
     public byte[] getThubmailVideo(String path) {
-        Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
+
+        Bitmap thumb = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path),
+                240,240);
+
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        thumb.compress(Bitmap.CompressFormat.PNG,100, baos);
+        byte [] b  = baos.toByteArray();
+        return b;
+    }
+    public byte[] getThubmailImage(String path) {
+        Bitmap thumb = ThumbnailUtils.(path,
                 MediaStore.Images.Thumbnails.MINI_KIND);
 
         ByteArrayOutputStream baos=new ByteArrayOutputStream();
@@ -166,12 +177,13 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
                             //
 
                         } catch (UnsupportedEncodingException e) {
+
+                            //  iv_imageview.setImageBitmap(bitmap);
+                            mIUploadFilePresenter.onDownloadFileFailed(e.getMessage());
+                            mIUploadFilePresenter.onTurnOffProcessbar();
                             e.printStackTrace();
                             return;
                         }
-                        //  iv_imageview.setImageBitmap(bitmap);
-                        mIUploadFilePresenter.onUploadFileSuccess();
-                        mIUploadFilePresenter.onTurnOffProcessbar();
 
 
                     }
@@ -236,7 +248,11 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
                             String urlImage = new String(response.data,
                                     HttpHeaderParser.parseCharset(response.headers, "utf-8"));
 
-                            new IElementImpl().onPushElement(context,idCtg, new Element(null, "", urlImage, MainConstant.TYPE_IMAGE, ""));
+                            new IElementImpl().onPushElement(
+                                    context,
+                                    idCtg,
+                                    new Element(null, "", urlImage, MainConstant.TYPE_IMAGE, "")
+                            );
 
 
                         } catch (UnsupportedEncodingException e) {
@@ -288,7 +304,7 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
             protected Map<String, DataPart> getByteData() {
                 Map<String, DataPart> params = new HashMap<>();
                 long imagename = System.currentTimeMillis();
-                params.put("file", new DataPart(imagename + pathFile.substring(pathFile.lastIndexOf(".")), getFileDataFromDrawable(pathFile)));
+                params.put("file", new DataPart(imagename + "thumbail.jpg", getThubmailVideo(pathFile)));
                 return params;
             }
         };

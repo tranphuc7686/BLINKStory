@@ -3,12 +3,14 @@ package com.example.blinkstory.model.repository;
 import android.content.Context;
 import android.util.Log;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.model.entity.Element;
@@ -21,6 +23,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.content.ContentValues.TAG;
 
 public class IElementImpl implements IElement {
     private IElementPresenter iElementPresenter;
@@ -72,38 +76,54 @@ public class IElementImpl implements IElement {
 
         RequestQueue requestQueue = Volley.newRequestQueue(context);
 
+            HashMap<String, String> map = new HashMap<String, String>();
+            // pass your input text
+            map.put("Id", model.getId());
+            map.put("Caption", model.getCaption());
+            map.put("Url", model.getUrl());
+            map.put("TypeData", model.getTypeData() + "");
+            map.put("SrcThumbail", model.getSrcThumbail());
+            map.put("IsUser", 2+"");
+            map.put("CategoryId",idCtg+"");
+            Log.e("para", map + "");
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, MainConstant.URL_ADD_DATA,
-                new Response.Listener<String>() {
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                MainConstant.URL_ADD_DATA, new JSONObject(map),
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(String response) {
-                        System.out.println(response);
+                    public void onResponse(JSONObject response) {
+                        Log.d(TAG, response.toString());
 
                     }
                 },
                 new Response.ErrorListener() {
+
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        System.out.println(error.getMessage());
+                        VolleyLog.d(TAG, "Error: " + error.getMessage());
+
                     }
                 }) {
             @Override
-            protected Map<String, String> getParams() {
-                HashMap<String, String> map = new HashMap<String, String>();
-                // pass your input text
-                map.put("Id", model.getId());
-                map.put("Caption", model.getCaption());
-                map.put("Url", model.getUrl());
-                map.put("TypeData", model.getTypeData() + "");
-                map.put("SrcThumbail", model.getSrcThumbail());
-                map.put("IsUser", 2+"");
-                map.put("CategoryId",idCtg+"");
-                Log.e("para", map + "");
-                return map;
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+//                params.put("Content-Type", "application/json; charset=UTF-8");
+                return params;
             }
 
+
+
         };
-        requestQueue.add(stringRequest);
+        jsonObjReq.setTag(TAG);
+// Adding request to request queue
+        requestQueue.add(jsonObjReq);
+
+// Cancelling request
+/* if (queue!= null) {
+queue.cancelAll(TAG);
+} */
 
 
     }
