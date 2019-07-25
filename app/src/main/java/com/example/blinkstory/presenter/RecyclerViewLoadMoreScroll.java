@@ -56,9 +56,9 @@ public class RecyclerViewLoadMoreScroll extends RecyclerView.OnScrollListener {
         } else if (mLayoutManager instanceof LinearLayoutManager) {
             lastVisibleItem = ((LinearLayoutManager) mLayoutManager).findLastVisibleItemPosition();
         }
+
         if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
             if (mOnLoadMoreListener != null) {
-                System.out.println("LoadMORESTART=>>>>>>>>>>>>>>>>");
                 mOnLoadMoreListener.onLoadMore(totalItemCount);
             }
             isLoading = true;

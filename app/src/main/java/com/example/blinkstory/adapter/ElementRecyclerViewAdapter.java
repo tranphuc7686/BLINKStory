@@ -2,14 +2,15 @@ package com.example.blinkstory.adapter;
 
 import android.content.Context;
 import android.os.Handler;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.blinkstory.constant.MainConstant;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+
 import com.example.blinkstory.R;
+import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.model.entity.Element;
 import com.example.blinkstory.viewholder.ElementViewHolders;
 import com.example.blinkstory.viewholder.LoadingHolder;
@@ -114,6 +115,7 @@ import java.util.List;
         public void addData(List<Element> dataViews) {
             this.itemList.addAll(dataViews);
             notifyDataSetChanged();
+
         }
 
     }

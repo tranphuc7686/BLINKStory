@@ -18,8 +18,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.Volley;
 import com.example.blinkstory.constant.MainConstant;
-import com.example.blinkstory.model.entity.Element;
-import com.example.blinkstory.presenter.IUploadFilePresenter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,26 +32,91 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UploadFileAsyntask implements IUploadFileAsyntask {
-    private IUploadFilePresenter mIUploadFilePresenter;
+public class UploadFileAsyntask  {
+
     private Context context;
+    private IUploadFileAsyntask iUploadFileAsyntask;
 
-    public UploadFileAsyntask(IUploadFilePresenter mIUploadFilePresenter, Context context) {
-        this.mIUploadFilePresenter = mIUploadFilePresenter;
+    public UploadFileAsyntask(Context context,IUploadFileAsyntask iUploadFileAsyntask) {
+
         this.context = context;
+        this.iUploadFileAsyntask = iUploadFileAsyntask;
     }
 
-    @Override
-    public void onUploadFileAsyntask(final String pathFile, int idCtg, final int typeData) {
-        if(typeData == MainConstant.TYPE_IMAGE){
-            PushImage(pathFile,idCtg);
-        }
-        else{
-            PushVideo(pathFile,idCtg);
-        }
+
+    public void startUploadFile(final byte[] dataFile, final String fileExtension) {
+        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, MainConstant.URL_UPLOAD_DATA,
+                new Response.Listener<NetworkResponse>() {
+                    @Override
+                    public void onResponse(NetworkResponse response) {
+                        try {
+                            String urlImage = new String(response.data,
+                                    HttpHeaderParser.parseCharset(response.headers, "utf-8"));
+                            //  iv_imageview.setImageBitmap(bitmap);
+                            iUploadFileAsyntask.onUpdateFileSuccess(urlImage);
+
+
+
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+
+                    }
+                },
+                new Response.ErrorListener() {
+                    @SuppressLint("LongLogTag")
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        iUploadFileAsyntask.onUpdateFileFailed("Update file Error :" + error.getMessage());
+                        Log.e("VolleyonErrorResponse200", "Error: " + error.getMessage());
+                        // Toasty.error(getApplicationContext(),"Something went wrong", Toast.LENGTH_SHORT).show();
+                        NetworkResponse response = error.networkResponse;
+                        if (error instanceof ServerError && response != null) {
+                            try {
+                                String res = new String(response.data,
+                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
+                                // Now you can use any deserializer to make sense of data
+                                JSONObject obj = new JSONObject(res);
+                            } catch (UnsupportedEncodingException e1) {
+                                // Couldn't properly decode data to string
+                                e1.printStackTrace();
+                            } catch (JSONException e2) {
+                                // returned data is not JSONObject?
+                                e2.printStackTrace();
+                            }
+
+                        }
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+//                params.put("Content-Type", "application/json; charset=UTF-8");
+//                params.put("Content-Type", "application/json; charset=UTF-8");
+                return params;
+            }
+
+            @Override
+            protected Map<String, DataPart> getByteData() {
+                Map<String, DataPart> params = new HashMap<>();
+                long imagename = System.currentTimeMillis();
+                params.put("file", new DataPart(imagename + fileExtension,dataFile));
+                return params;
+            }
+        };
+        volleyMultipartRequest.setRetryPolicy(new DefaultRetryPolicy(
+                999999999,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        //adding the request to volley
+        Volley.newRequestQueue(context).add(volleyMultipartRequest);
     }
 
-    public byte[] getFileDataFromDrawable(String path) {
+
+
+    public static byte[] getFileDataContent(String path) {
         File file = new File(path);
         int size = (int) file.length();
         byte[] bytes = new byte[size];
@@ -71,249 +134,26 @@ public class UploadFileAsyntask implements IUploadFileAsyntask {
         return bytes;
     }
 
-    public byte[] getThubmailVideo(String path) {
+    public static byte[] getThubmailImage(String path) {
 
         Bitmap thumb = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path),
-                240,240);
+                240, 240);
 
-        ByteArrayOutputStream baos=new ByteArrayOutputStream();
-        thumb.compress(Bitmap.CompressFormat.PNG,100, baos);
-        byte [] b  = baos.toByteArray();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        thumb.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] b = baos.toByteArray();
         return b;
     }
-    public byte[] getThubmailImage(String path) {
-        Bitmap thumb = ThumbnailUtils.(path,
+
+    public  static byte[] getThubmailVideo(String path) {
+        Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
                 MediaStore.Images.Thumbnails.MINI_KIND);
 
-        ByteArrayOutputStream baos=new ByteArrayOutputStream();
-        thumb.compress(Bitmap.CompressFormat.PNG,100, baos);
-        byte [] b  = baos.toByteArray();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        thumb.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] b = baos.toByteArray();
         return b;
     }
 
-    private void PushVideo(final String pathFile, final int idCtg) {
-        mIUploadFilePresenter.onTurnOnProcessbar();
-        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, MainConstant.URL_UPLOAD_DATA,
-                new Response.Listener<NetworkResponse>() {
-                    @Override
-                    public void onResponse(NetworkResponse response) {
-                        try {
-                            final String urlThumbail = new String(response.data,
-                                    HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-
-                            // add content video
-                            VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, MainConstant.URL_UPLOAD_DATA,
-                                    new Response.Listener<NetworkResponse>() {
-                                        @Override
-                                        public void onResponse(NetworkResponse response) {
-                                            try {
-                                                String urlImage = new String(response.data,
-                                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-
-                                                new IElementImpl().onPushElement(context,idCtg,new Element("","",urlImage,MainConstant.TYPE_VIDEO,urlThumbail));
-
-
-
-                                            } catch (UnsupportedEncodingException e) {
-                                                e.printStackTrace();
-                                                return;
-                                            }
-                                            //  iv_imageview.setImageBitmap(bitmap);
-                                            mIUploadFilePresenter.onUploadFileSuccess();
-                                            mIUploadFilePresenter.onTurnOffProcessbar();
-
-
-                                        }
-                                    },
-                                    new Response.ErrorListener() {
-                                        @SuppressLint("LongLogTag")
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
-                                            mIUploadFilePresenter.onTurnOffProcessbar();
-                                            mIUploadFilePresenter.onDownloadFileFailed(error.getMessage());
-                                            Log.e("VolleyonErrorResponse200", "Error: " + error.getMessage());
-                                            // Toasty.error(getApplicationContext(),"Something went wrong", Toast.LENGTH_SHORT).show();
-                                            NetworkResponse response = error.networkResponse;
-                                            if (error instanceof ServerError && response != null) {
-                                                try {
-                                                    String res = new String(response.data,
-                                                            HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-                                                    // Now you can use any deserializer to make sense of data
-                                                    JSONObject obj = new JSONObject(res);
-                                                } catch (UnsupportedEncodingException e1) {
-                                                    // Couldn't properly decode data to string
-                                                    e1.printStackTrace();
-                                                } catch (JSONException e2) {
-                                                    // returned data is not JSONObject?
-                                                    e2.printStackTrace();
-                                                }
-
-                                            }
-                                        }
-                                    }) {
-                                @Override
-                                public Map<String, String> getHeaders() throws AuthFailureError {
-                                    Map<String, String> params = new HashMap<String, String>();
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-                                    return params;
-                                }
-
-                                @Override
-                                protected Map<String, DataPart> getByteData() {
-                                    Map<String, DataPart> params = new HashMap<>();
-                                    long imagename = System.currentTimeMillis();
-                                    params.put("file", new DataPart(imagename + pathFile.substring(pathFile.lastIndexOf(".")), getFileDataFromDrawable(pathFile)));
-                                    return params;
-                                }
-                            };
-                            volleyMultipartRequest.setRetryPolicy(new DefaultRetryPolicy(
-                                    999999999,
-                                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-                            //adding the request to volley
-                            Volley.newRequestQueue(context).add(volleyMultipartRequest);
-
-                            //
-
-                        } catch (UnsupportedEncodingException e) {
-
-                            //  iv_imageview.setImageBitmap(bitmap);
-                            mIUploadFilePresenter.onDownloadFileFailed(e.getMessage());
-                            mIUploadFilePresenter.onTurnOffProcessbar();
-                            e.printStackTrace();
-                            return;
-                        }
-
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @SuppressLint("LongLogTag")
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mIUploadFilePresenter.onTurnOffProcessbar();
-                        mIUploadFilePresenter.onDownloadFileFailed(error.getMessage());
-                        Log.e("VolleyonErrorResponse200", "Error: " + error.getMessage());
-                        // Toasty.error(getApplicationContext(),"Something went wrong", Toast.LENGTH_SHORT).show();
-                        NetworkResponse response = error.networkResponse;
-                        if (error instanceof ServerError && response != null) {
-                            try {
-                                String res = new String(response.data,
-                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-                                // Now you can use any deserializer to make sense of data
-                                JSONObject obj = new JSONObject(res);
-                            } catch (UnsupportedEncodingException e1) {
-                                // Couldn't properly decode data to string
-                                e1.printStackTrace();
-                            } catch (JSONException e2) {
-                                // returned data is not JSONObject?
-                                e2.printStackTrace();
-                            }
-
-                        }
-                    }
-                }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-                return params;
-            }
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> params = new HashMap<>();
-                long imagename = System.currentTimeMillis();
-                params.put("file", new DataPart(imagename + "thumbail.jpg", getThubmailVideo(pathFile)));
-                return params;
-            }
-        };
-        volleyMultipartRequest.setRetryPolicy(new DefaultRetryPolicy(
-                999999999,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        //adding the request to volley
-        Volley.newRequestQueue(context).add(volleyMultipartRequest);
-    }
-
-    private void PushImage(final String pathFile, final int idCtg) {
-        mIUploadFilePresenter.onTurnOnProcessbar();
-        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, MainConstant.URL_UPLOAD_DATA,
-                new Response.Listener<NetworkResponse>() {
-                    @Override
-                    public void onResponse(NetworkResponse response) {
-                        try {
-                            String urlImage = new String(response.data,
-                                    HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-
-                            new IElementImpl().onPushElement(
-                                    context,
-                                    idCtg,
-                                    new Element(null, "", urlImage, MainConstant.TYPE_IMAGE, "")
-                            );
-
-
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                            return;
-                        }
-                        //  iv_imageview.setImageBitmap(bitmap);
-                        mIUploadFilePresenter.onUploadFileSuccess();
-                        mIUploadFilePresenter.onTurnOffProcessbar();
-
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @SuppressLint("LongLogTag")
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mIUploadFilePresenter.onTurnOffProcessbar();
-                        mIUploadFilePresenter.onDownloadFileFailed(error.getMessage());
-                        Log.e("VolleyonErrorResponse200", "Error: " + error.getMessage());
-                        // Toasty.error(getApplicationContext(),"Something went wrong", Toast.LENGTH_SHORT).show();
-                        NetworkResponse response = error.networkResponse;
-                        if (error instanceof ServerError && response != null) {
-                            try {
-                                String res = new String(response.data,
-                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-                                // Now you can use any deserializer to make sense of data
-                                JSONObject obj = new JSONObject(res);
-                            } catch (UnsupportedEncodingException e1) {
-                                // Couldn't properly decode data to string
-                                e1.printStackTrace();
-                            } catch (JSONException e2) {
-                                // returned data is not JSONObject?
-                                e2.printStackTrace();
-                            }
-
-                        }
-                    }
-                }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-//                params.put("Content-Type", "application/json; charset=UTF-8");
-                return params;
-            }
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> params = new HashMap<>();
-                long imagename = System.currentTimeMillis();
-                params.put("file", new DataPart(imagename + "thumbail.jpg", getThubmailVideo(pathFile)));
-                return params;
-            }
-        };
-        volleyMultipartRequest.setRetryPolicy(new DefaultRetryPolicy(
-                999999999,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        //adding the request to volley
-        Volley.newRequestQueue(context).add(volleyMultipartRequest);
-    }
 
 }

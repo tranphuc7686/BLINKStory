@@ -25,7 +25,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.blinkstory.adapter.ElementRecyclerViewAdapter;
 import com.example.blinkstory.adapter.StaggerdSpacesItemDecoration;
@@ -68,8 +67,6 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     private SlidrInterface slidr;
     // spinner loading
     private ProgressBar spinner;
-    // pull to refesh
-    private SwipeRefreshLayout pullToRefresh;
 
     // Presenter
     private IElementPresenter iElementPresenter;
@@ -128,6 +125,10 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     private void SetupRecyclerView(ArrayList<Element> elements) {
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
+        recyclerView.setItemViewCacheSize(20);
+        recyclerView.setDrawingCacheEnabled(true);
+        recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+
         int spacingInPixels = 15;
         recyclerView.addItemDecoration(new StaggerdSpacesItemDecoration(spacingInPixels));
 
@@ -144,6 +145,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         scrollListener.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(int index) {
+
                 LoadMoreData(index);
             }
         });
@@ -152,6 +154,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     }
 
     private void LoadMoreData(final int index) {
+        recyclerView.setLayoutFrozen(true);
         staggeredAdapter.addLoadingView();
         //add loading item
         new Handler().post(new Runnable() {
@@ -160,10 +163,17 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
                 new IElementPresenterImpl(new IElementView() {
                     @Override
                     public void onGetDataElementRespone(ArrayList<Element> elements) {
+
+                        if(elements.size() == 0){
+                            recyclerView.setLayoutFrozen(false);
+                            return;
+                        }
+
                         staggeredAdapter.removeLoadingView();
                         staggeredAdapter.addData(elements);
                         staggeredAdapter.notifyDataSetChanged();
                         scrollListener.setLoaded();
+                        recyclerView.setLayoutFrozen(false);
                     }
 
                     @Override
@@ -246,12 +256,12 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         fab = (FloatingActionButton) findViewById(R.id.fab);
 
         spinner = (ProgressBar) findViewById(R.id.spinner_loading_element);
-        pullToRefresh = (SwipeRefreshLayout) findViewById(R.id.pullToRefresh);
 
-        pullToRefresh.setColorSchemeResources(R.color.colorAccent,
-                android.R.color.holo_green_dark,
-                android.R.color.holo_orange_dark,
-                android.R.color.holo_blue_dark);
+
+//        spinner.setColorSchemeResources(R.color.colorAccent,
+//                android.R.color.holo_green_dark,
+//                android.R.color.holo_orange_dark,
+//                android.R.color.holo_blue_dark);
         mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         mTitle = (TextView) findViewById(R.id.ctgTitle);
         mTitleContainer = (LinearLayout) findViewById(R.id.main_linearlayout_title);
@@ -305,18 +315,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
                         .show();
             }
         });
-        //setting an setOnRefreshListener on the SwipeDownLayout
-        pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            int Refreshcounter = 1; //Counting how many times user have refreshed the layout
 
-            @Override
-            public void onRefresh() {
-                //Here you can update your data from internet or from local SQLite data
-//                sList.add(new Element("0HEEGA6LK9YYKHUG", "Dr Stephen Hawking", "https://instagram.fsgn2-3.fna.fbcdn.net/vp/92bc1ab09e61a31a9a80618c8c824588/5D9EE11D/t51.2885-15/e35/s1080x1080/61896010_2072686526192657_4529318621338531302_n.jpg?_nc_ht=instagram.fsgn2-3.fna.fbcdn.net", 0, "https://instagram.fsgn2-3.fna.fbcdn.net/vp/f3831face52b24f1f20e3c7d9d68a483/5D88FFD9/t51.2885-15/sh0.08/e35/s640x640/61896010_2072686526192657_4529318621338531302_n.jpg?_nc_ht=instagram.fsgn2-3.fna.fbcdn.net"));
-//                staggeredAdapter.notifyDataSetChanged();
-//                pullToRefresh.setRefreshing(false);
-            }
-        });
     }
 
     @Override
@@ -326,10 +325,10 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         Uri aa = data.getData();
         String mVideoURI = getPath(this, aa);
         if (requestCode == PICK_FROM_GALLERY_IMAGE) {
-            new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(mVideoURI, idCtg, 0);
+            new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(idCtg,MainConstant.TYPE_IMAGE, mVideoURI);
             return;
         }
-        new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(mVideoURI, idCtg, 1);
+        new UploadFilePresenter(iUploadView, spinner, getApplicationContext()).setOnUploadFileTask(idCtg,MainConstant.TYPE_VIDEO, mVideoURI);
         // Get Path of selected image
 
     }

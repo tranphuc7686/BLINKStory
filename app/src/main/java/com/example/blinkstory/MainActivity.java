@@ -1,12 +1,12 @@
 package com.example.blinkstory;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,15 +15,21 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.example.blinkstory.adapter.MainListViewAdapter;
 import com.example.blinkstory.model.entity.Category;
 import com.example.blinkstory.presenter.IMainPresenter;
 import com.example.blinkstory.presenter.IMainPresenterCompl;
-import com.example.blinkstory.adapter.MainListViewAdapter;
 import com.example.blinkstory.view.IMainView;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 
@@ -39,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
     private IMainPresenter iMainPresenter;
 
+    private LinearLayout viewDonate,viewFanpage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,9 +61,57 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         //full screen setting
         hideSystemUI();
         blindUI();
+        blindListener();
 
 
     }
+
+    private void blindListener() {
+        viewDonate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+        viewFanpage.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                Intent facebookIntent = new Intent(Intent.ACTION_VIEW);
+                String facebookUrl = getFacebookPageURL(view.getContext());
+                facebookIntent.setData(Uri.parse(facebookUrl));
+                startActivity(facebookIntent);
+            }
+            public  String getFacebookPageURL(Context context)
+            {
+                final String FACEBOOK_PAGE_ID = "346381369567878";
+                final String FACEBOOK_URL = "https://www.facebook.com/Blinks-346381369567878/";
+
+                if(appInstalledOrNot(context, "com.facebook.katana"))
+                {
+                    return "fb://page/" + FACEBOOK_PAGE_ID;
+                }
+                return FACEBOOK_URL;
+
+            }
+            private  boolean appInstalledOrNot(Context context, String uri)
+            {
+                PackageManager pm = context.getPackageManager();
+                try
+                {
+                    pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+                    return true;
+                }
+                catch(PackageManager.NameNotFoundException e)
+                {
+                }
+
+                return false;
+            }
+
+        });
+    }
+
 
     @Override
     protected void onResume() {
@@ -136,6 +192,10 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         });
         iMainPresenter = new IMainPresenterCompl(this,getApplicationContext());
         ((IMainPresenterCompl) iMainPresenter).loadData();
+
+        //
+        viewDonate = (LinearLayout)findViewById(R.id.navDonate);
+        viewFanpage = (LinearLayout)findViewById(R.id.navFanpage);
     }
 
 

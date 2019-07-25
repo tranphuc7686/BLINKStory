@@ -5,8 +5,10 @@ import com.example.blinkstory.model.entity.Element;
 import java.util.ArrayList;
 
 public interface IElementPresenter {
-    public void onGetDataElementListener(ArrayList<Element> elements);
-    public void onGetDataErrorListener(String mess);
-    public void onVisiableProcessBar();
-    public void onGoneProcessBar();
+     void onGetDataElementListener(ArrayList<Element> elements);
+     void onGetDataErrorListener(String mess);
+     void onVisiableProcessBar();
+     void onGoneProcessBar();
+    void onAddSuccess();
+    void onAddFailed(String msg);
 }

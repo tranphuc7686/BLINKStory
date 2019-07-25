@@ -44,4 +44,14 @@ public class IElementPresenterImpl implements IElementPresenter {
     public void onGoneProcessBar() {
         progressBar.setVisibility(View.GONE);
     }
+
+    @Override
+    public void onAddSuccess() {
+
+    }
+
+    @Override
+    public void onAddFailed(String msg) {
+
+    }
 }

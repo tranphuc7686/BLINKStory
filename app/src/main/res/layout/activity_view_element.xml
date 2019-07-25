@@ -59,7 +59,7 @@
                     android:id="@+id/btnSetWallpaper"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/btn_download" />
+                    android:background="@drawable/btn_set_wallpaper" />
                 <!--
                     your layouts/views/widgets
                 -->
@@ -89,6 +89,7 @@
                 android:layout_weight="1">
 
                 <ImageButton
+                    android:visibility="gone"
                     android:id="@+id/dummy_button1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

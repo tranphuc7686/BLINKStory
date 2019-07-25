@@ -4,34 +4,36 @@ import android.content.Context;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import com.example.blinkstory.model.repository.IUploadFileAsyntask;
-import com.example.blinkstory.model.repository.UploadFileAsyntask;
+import com.example.blinkstory.model.repository.IElement;
+import com.example.blinkstory.model.repository.IElementImpl;
 import com.example.blinkstory.view.IUploadView;
 
 public class UploadFilePresenter implements IUploadFilePresenter {
     private IUploadView mIUploadView;
     private ProgressBar mProgressBar;
-    private IUploadFileAsyntask mIUploadFileAsyntask;
+    private IElement iElement;
+    private Context context;
 
 
     public UploadFilePresenter(IUploadView mIUploadView, ProgressBar mProgressBar,Context context) {
         this.mIUploadView = mIUploadView;
         this.mProgressBar = mProgressBar;
-        mIUploadFileAsyntask = new UploadFileAsyntask(this,context);
+        this.context = context;
+        iElement = new IElementImpl(this);
     }
 
-    public void setOnUploadFileTask(String pathFile,int idCtg,int type) {
-        mIUploadFileAsyntask.onUploadFileAsyntask(pathFile,idCtg,type);
+    public void setOnUploadFileTask(int idCategory,int typeData,String pathFile) {
+        iElement.onPushElement(context,idCategory,typeData,pathFile);
     }
 
 
     @Override
-    public void onUploadFileSuccess() {
+    public void onUploadFileSuccess(String path) {
         mIUploadView.onSusscess();
     }
 
     @Override
-    public void onDownloadFileFailed(String msg) {
+    public void onUploadFileFailed(String msg) {
         mIUploadView.onFailed(msg);
     }
 

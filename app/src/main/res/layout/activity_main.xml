@@ -92,6 +92,7 @@
             <!-- Item Info -->
 
             <LinearLayout
+                android:id="@+id/navDonate"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/navigation_item_height"
                 android:layout_marginTop="@dimen/padding_tiny_plus_one"
@@ -104,20 +105,21 @@
                 <ImageView
                     android:layout_width="@dimen/navigation_item_icon_size"
                     android:layout_height="@dimen/navigation_item_icon_size"
-                    android:src="@drawable/btn_download" />
+                    android:src="@drawable/ic_donate" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/colorPink"
                     android:layout_marginLeft="@dimen/padding_extra_extra_large"
-                    android:text="@string/action_settings" />
+                    android:text="Donate" />
 
             </LinearLayout>
 
             <!-- Item Help -->
 
             <LinearLayout
+                android:id="@+id/navFanpage"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/navigation_item_height"
                 android:background="@android:color/black"
@@ -129,14 +131,14 @@
                 <ImageView
                     android:layout_width="@dimen/navigation_item_icon_size"
                     android:layout_height="@dimen/navigation_item_icon_size"
-                    android:src="@drawable/btn_download" />
+                    android:src="@drawable/ic_fanpage" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/padding_extra_extra_large"
                     android:textColor="@color/colorPink"
-                    android:text="@string/app_name" />
+                    android:text="Fanpage Facebook" />
 
             </LinearLayout>
 
