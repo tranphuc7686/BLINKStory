@@ -51,6 +51,7 @@ public class ICategoryImpl implements ICategory {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                      
                         iMainPresenter.onErrorCtgApi(error.toString());
                     }
                 });

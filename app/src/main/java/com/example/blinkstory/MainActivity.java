@@ -30,6 +30,7 @@ import com.example.blinkstory.presenter.IMainPresenter;
 import com.example.blinkstory.presenter.IMainPresenterCompl;
 import com.example.blinkstory.view.IMainView;
 import com.google.android.material.snackbar.Snackbar;
+import com.example.blinkstory.R;
 
 import java.util.ArrayList;
 
@@ -229,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
     @Override
     public void onDataSponseError(String status) {
-        Toast.makeText(this, "Error "+status, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Error connection !! Pleases check your connection.", Toast.LENGTH_SHORT).show();
     }
 }
 

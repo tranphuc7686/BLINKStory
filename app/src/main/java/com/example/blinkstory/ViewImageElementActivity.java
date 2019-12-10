@@ -2,6 +2,7 @@ package com.example.blinkstory;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,12 +14,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
@@ -26,11 +21,27 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.example.blinkstory.constant.MainConstant;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdCallback;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.material.snackbar.Snackbar;
 import com.jackandphantom.blurimage.BlurImage;
 import com.r0adkll.slidr.Slidr;
 import com.r0adkll.slidr.model.SlidrInterface;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import com.example.blinkstory.R;
 
 import java.io.ByteArrayOutputStream;
 
@@ -87,7 +98,6 @@ public class ViewImageElementActivity extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            mControlsView.setVisibility(View.VISIBLE);
 
         }
     };
@@ -122,6 +132,8 @@ public class ViewImageElementActivity extends AppCompatActivity {
     private String pathImageToChangeWallpater;
     // reques code to change wallpaper activity
     private static final int REQUEST_CHANGE_WALLPAPER = 0x9345;
+    //ads
+    private RewardedAd rewardedAd;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,13 +176,57 @@ public class ViewImageElementActivity extends AppCompatActivity {
         spinnerLoading = (ProgressBar) findViewById(R.id.spinner_loading_view_element);
         btnSetWallpaper = (ImageButton) findViewById(R.id.btnSetWallpaper);
         btnDownload = (ImageButton) findViewById(R.id.btnDownload);
+        addAds();
     }
     private void blindListenerUi() {
         btnSetWallpaper.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.out.println("CLick to set wallpaper !!!");
-                setWallpaper();
+                final boolean[] isEarn = {false};
+                if (rewardedAd.isLoaded()) {
+                    Activity activityContext = ViewImageElementActivity.this;
+                    RewardedAdCallback adCallback = new RewardedAdCallback() {
+                        @Override
+                        public void onRewardedAdOpened() {
+                            // Ad opened.
+                        }
+
+                        @Override
+                        public void onRewardedAdClosed() {
+                            if(!isEarn[0]){
+                                Snackbar.make(getWindow().getDecorView().getRootView(), "Set wallpaper failed !! ", Snackbar.LENGTH_INDEFINITE)
+                                        .setAction("DISMISS", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                            }
+                                        }).show();
+
+                            }
+                            // Ad closed.
+                            rewardedAd = createAndLoadRewardedAd() ;
+                        }
+
+                        @Override
+                        public void onUserEarnedReward(@NonNull RewardItem reward) {
+                            isEarn[0] = true;
+                            // User earned reward.
+                            setWallpaper();
+                        }
+
+                        @Override
+                        public void onRewardedAdFailedToShow(int errorCode) {
+                            // Ad failed to display
+                        }
+                    };
+                    rewardedAd.show(activityContext, adCallback);
+                } else {
+                    Snackbar.make(getWindow().getDecorView().getRootView(), "Set wallpaper failed, Check your internet !! ", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("DISMISS", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                }
+                            }).show();
+                }
             }
 
             private void setWallpaper() {
@@ -233,9 +289,54 @@ public class ViewImageElementActivity extends AppCompatActivity {
         });
 
         btnDownload.setOnClickListener(new View.OnClickListener() {
+            boolean isEarn = false;
             @Override
             public void onClick(View view) {
-                downloadImg();
+                if (rewardedAd.isLoaded()) {
+                    Activity activityContext = ViewImageElementActivity.this;
+                    RewardedAdCallback adCallback = new RewardedAdCallback() {
+                        @Override
+                        public void onRewardedAdOpened() {
+                            // Ad opened.
+                        }
+
+                        @Override
+                        public void onRewardedAdClosed() {
+                            if(!isEarn){
+                                Snackbar.make(getWindow().getDecorView().getRootView(), "Download failed !! ", Snackbar.LENGTH_INDEFINITE)
+                                        .setAction("DISMISS", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                            }
+                                        }).show();
+
+                            }
+                            // Ad closed.
+                            rewardedAd = createAndLoadRewardedAd() ;
+                        }
+
+                        @Override
+                        public void onUserEarnedReward(@NonNull RewardItem reward) {
+                            isEarn = true;
+                            // User earned reward.
+                            //funciton download data
+                            downloadImg();
+                        }
+
+                        @Override
+                        public void onRewardedAdFailedToShow(int errorCode) {
+                            // Ad failed to display
+                        }
+                    };
+                    rewardedAd.show(activityContext, adCallback);
+                } else {
+                    Snackbar.make(getWindow().getDecorView().getRootView(), "Download wallpaper failed, Check your internet !! ", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("DISMISS", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                }
+                            }).show();
+                }
             }
 
             private void downloadImg() {
@@ -248,16 +349,6 @@ public class ViewImageElementActivity extends AppCompatActivity {
 //
 //                startActivityForResult(i, 1);
                 saveImageToGallery(getApplicationContext(),imgContent);
-
-
-
-
-
-
-
-
-
-
             }
             private void saveImageToGallery(Context context, Bitmap inImage) {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -326,7 +417,6 @@ public class ViewImageElementActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        mControlsView.setVisibility(View.GONE);
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
@@ -375,7 +465,7 @@ public class ViewImageElementActivity extends AppCompatActivity {
 
             @Override
             public void onBitmapFailed(Drawable errorDrawable) {
-                System.out.println("onBitmapFailed");
+                System.out.println("Error connection !! Pleases check your connection.");
             }
 
             @Override
@@ -386,7 +476,7 @@ public class ViewImageElementActivity extends AppCompatActivity {
         imageContent.setTag(target);
         Picasso.with(this)
                 .load(url)
-                .placeholder(R.drawable.logo)
+                .placeholder(R.drawable.logoblink)
                 .into(target);
 
     }
@@ -397,4 +487,26 @@ public class ViewImageElementActivity extends AppCompatActivity {
         super.onDestroy();
         System.out.println("Ondestroy !!");
     }
+    private void addAds() {
+        MobileAds.initialize(this, MainConstant.APP_ADS);
+        this.rewardedAd = createAndLoadRewardedAd();
+    }
+    public RewardedAd createAndLoadRewardedAd() {
+        RewardedAd rewardedAd = new RewardedAd(this,
+                MainConstant.TRATHUONG_ADS);
+        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
+            @Override
+            public void onRewardedAdLoaded() {
+                // Ad successfully loaded.
+            }
+
+            @Override
+            public void onRewardedAdFailedToLoad(int errorCode) {
+                // Ad failed to load.
+            }
+        };
+        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
+        return rewardedAd;
+    }
+
 }

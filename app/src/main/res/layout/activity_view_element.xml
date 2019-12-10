@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/background_content"
-    android:background="@android:color/transparent"
+    android:background="@android:color/background_dark"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.blinkstory.ViewImageElementActivity">
@@ -66,20 +66,7 @@
 
             </com.example.blinkstory.presenter.SquareLayout>
 
-            <com.example.blinkstory.presenter.SquareLayout
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_weight="1">
 
-                <ImageButton
-                    android:id="@+id/btnDownload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/btn_download" />
-
-            </com.example.blinkstory.presenter.SquareLayout>
 
             <com.example.blinkstory.presenter.SquareLayout
                 style="?metaButtonBarButtonStyle"
@@ -91,6 +78,20 @@
                 <ImageButton
                     android:visibility="gone"
                     android:id="@+id/dummy_button1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/btn_download" />
+
+            </com.example.blinkstory.presenter.SquareLayout>
+            <com.example.blinkstory.presenter.SquareLayout
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_weight="1">
+
+                <ImageButton
+                    android:id="@+id/btnDownload"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/btn_download" />

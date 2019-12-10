@@ -14,20 +14,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.blinkstory.ElementActivity;
-import com.example.blinkstory.R;
 import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.model.entity.Category;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.squareup.picasso.Picasso;
+import com.example.blinkstory.R;
 
 import java.util.ArrayList;
-
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 public class MainListViewAdapter extends ArrayAdapter<Category> implements View.OnClickListener{
 
     private ArrayList<Category> dataSet;
     Context mContext;
     private int mRowHeight = 0;
+    private InterstitialAd mInterstitialAd;
 
 
     // View lookup cache
@@ -44,6 +46,7 @@ public class MainListViewAdapter extends ArrayAdapter<Category> implements View.
         int width = displayMetrics.widthPixels;
         int height = displayMetrics.heightPixels;
         mRowHeight = height;
+        addAds();
 
     }
 
@@ -52,14 +55,14 @@ public class MainListViewAdapter extends ArrayAdapter<Category> implements View.
 
         int position=(Integer) v.getTag();
         Object object= getItem(position);
-        Category dataModel=(Category)object;
+        final Category dataModel=(Category)object;
 
         switch (v.getId())
         {
             case R.id.item_info:
 
             {
-                Intent intent = new Intent(mContext,ElementActivity.class);
+                Intent intent = new Intent(mContext, ElementActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(MainConstant.CATEGORY_ID_EXTRA, dataModel.getIdCategory());
                 intent.putExtra(MainConstant.CATEGORY_THUBMAIL_EXTRA, dataModel.getUrlCategory());
@@ -104,7 +107,7 @@ public class MainListViewAdapter extends ArrayAdapter<Category> implements View.
         viewHolder.txtName.setText(dataModel.getName());
         viewHolder.info.setOnClickListener(this);
         viewHolder.info.setTag(position);
-        Picasso.with(mContext).load(dataModel.getUrlCategory()).placeholder(R.drawable.logo).into(viewHolder.info);
+        Picasso.with(mContext).load(dataModel.getUrlCategory()).placeholder(R.drawable.logoblink).into(viewHolder.info);
 
 
         // Return the completed view to render on screen
@@ -118,5 +121,13 @@ public class MainListViewAdapter extends ArrayAdapter<Category> implements View.
         convertView.getLayoutParams().width = RelativeLayout.LayoutParams.MATCH_PARENT;
         return convertView;
     }
+    private void addAds() {
+        MobileAds.initialize(mContext,
+                MainConstant.APP_ADS);
+        mInterstitialAd = new InterstitialAd(mContext);
+        mInterstitialAd.setAdUnitId(MainConstant.XENKE_ADS);
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
+
+    }
 }

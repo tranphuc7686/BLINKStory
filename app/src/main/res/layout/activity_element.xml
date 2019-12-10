@@ -71,6 +71,14 @@
     <!--<include layout="@layout/content_element" />-->
     <!--</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
     <include layout="@layout/content_element" />
+    <com.google.android.gms.ads.AdView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/adBannerView"
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        ads:adSize ="FULL_BANNER"
+        android:layout_gravity="bottom"
+        ads:adUnitId ="ca-app-pub-8810699871819525/5550629796"/>
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/main.toolbar"

@@ -12,7 +12,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.blinkstory.constant.MainConstant;
@@ -50,14 +49,21 @@ public class IElementImpl implements IElement {
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(context);
 
-
+        JSONObject jsonObject = new JSONObject();
+        try {
+            // user_id, comment_id,status
+            jsonObject.put("id", idCategory);
+            jsonObject.put("index", index);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // Request a string response from the provided URL.
-        JsonArrayRequest stringRequest = new JsonArrayRequest(Request.Method.POST,
-                MainConstant.GET_LIST_ELEMENT_URL + idCategory + "/" + index,
-                null,
-                new Response.Listener<JSONArray>() {
+        JsonObjectRequest  stringRequest = new JsonObjectRequest (Request.Method.POST,
+                MainConstant.GET_LIST_ELEMENT_URL ,
+                jsonObject,
+                new Response.Listener<JSONObject >() {
                     @Override
-                    public void onResponse(JSONArray response) {
+                    public void onResponse(JSONObject response) {
                         iElementPresenter.onGoneProcessBar();
                         try {
                             iElementPresenter.onGetDataElementListener(parseJsonElement(response));
@@ -246,8 +252,8 @@ queue.cancelAll(TAG);
     }
 
 
-    private ArrayList<Element> parseJsonElement(JSONArray response) throws JSONException {
-
+    private ArrayList<Element> parseJsonElement(JSONObject value) throws JSONException {
+        JSONArray response = value.getJSONArray("data");
         ArrayList<Element> resulf = new ArrayList<>();
         //loop through each object
         for (int i = 0; i < response.length(); i++) {

@@ -1,7 +1,6 @@
 package com.example.blinkstory;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -27,6 +26,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.blinkstory.adapter.ElementRecyclerViewAdapter;
+import com.example.blinkstory.adapter.OnItemClickListener;
 import com.example.blinkstory.adapter.StaggerdSpacesItemDecoration;
 import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.model.entity.Element;
@@ -37,6 +37,11 @@ import com.example.blinkstory.presenter.RecyclerViewLoadMoreScroll;
 import com.example.blinkstory.presenter.UploadFilePresenter;
 import com.example.blinkstory.view.IElementView;
 import com.example.blinkstory.view.IUploadView;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -48,7 +53,7 @@ import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class ElementActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener, IElementView, IUploadView {
+public class ElementActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener, IElementView, IUploadView, OnItemClickListener {
 
     private StaggeredGridLayoutManager gridLayoutManager;
     //setup toolbar
@@ -85,6 +90,9 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     private static final int PICK_FROM_GALLERY_VIDEO = 778;
     //id category
     private int idCtg;
+    //ads
+    private InterstitialAd mInterstitialAd;
+    private AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,7 +145,7 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         gridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
 //        gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
         recyclerView.setLayoutManager(gridLayoutManager);
-        staggeredAdapter = new ElementRecyclerViewAdapter(getApplicationContext(), elements);
+        staggeredAdapter = new ElementRecyclerViewAdapter(getApplicationContext(), elements,this);
         staggeredAdapter.setHasStableIds(true);
         recyclerView.setAdapter(staggeredAdapter);
 
@@ -275,46 +283,49 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
         //
         nameCtg = (TextView) findViewById(R.id.nameCtg);
         mCircleImageView = (CircleImageView) findViewById(R.id.ctgThub);
+        //add ads
+        adView = findViewById(R.id.adBannerView);
+        addAds(this);
 
     }
 
     private void addListener() {
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ElementActivity.this);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View view) {
-                final String[] singleChoiceItems = {"Image", "Video"};
-                final int[] itemSelected = {0};
-                alertDialogBuilder
-                        .setTitle("Select your data import !!")
-                        .setSingleChoiceItems(singleChoiceItems, itemSelected[0], new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int selectedIndex) {
-
-                                itemSelected[0] = selectedIndex;
-                            }
-                        })
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                if (itemSelected[0] == PICK_IMAGE_FILE) {
-                                    Intent intent = new Intent();
-                                    intent.setType("image/*");
-                                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_IMAGE);
-                                } else {
-                                    Intent intent = new Intent();
-                                    intent.setType("video/*");
-                                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_VIDEO);
-                                }
-
-                            }
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
-            }
-        });
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(final View view) {
+//                final String[] singleChoiceItems = {"Image", "Video"};
+//                final int[] itemSelected = {0};
+//                alertDialogBuilder
+//                        .setTitle("Select your data import !!")
+//                        .setSingleChoiceItems(singleChoiceItems, itemSelected[0], new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialogInterface, int selectedIndex) {
+//
+//                                itemSelected[0] = selectedIndex;
+//                            }
+//                        })
+//                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialogInterface, int i) {
+//                                if (itemSelected[0] == PICK_IMAGE_FILE) {
+//                                    Intent intent = new Intent();
+//                                    intent.setType("image/*");
+//                                    intent.setAction(Intent.ACTION_GET_CONTENT);
+//                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_IMAGE);
+//                                } else {
+//                                    Intent intent = new Intent();
+//                                    intent.setType("video/*");
+//                                    intent.setAction(Intent.ACTION_GET_CONTENT);
+//                                    startActivityForResult(Intent.createChooser(intent, "Complete action using"), PICK_FROM_GALLERY_VIDEO);
+//                                }
+//
+//                            }
+//                        })
+//                        .setNegativeButton("Cancel", null)
+//                        .show();
+//            }
+//        });
 
     }
 
@@ -425,7 +436,8 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
 
     @Override
     public void onGetDataElementErrorListener(String mess) {
-        Toast.makeText(this, "Error " + mess, Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(this, "Error connection !! Pleases check your connection. ", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -439,5 +451,62 @@ public class ElementActivity extends AppCompatActivity implements AppBarLayout.O
     public void onFailed(String msg) {
         Snackbar.make(getWindow().getDecorView().getRootView(), "Upload Failed : " + msg + " !!", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
+    }
+
+    @Override
+    public void onItemClick(final View view, final Element element) {
+        if(mInterstitialAd.isLoaded()&& (MainConstant.generateRandomIntIntRange(1,5) == 2)){
+            mInterstitialAd.show();
+            mInterstitialAd.setAdListener(new AdListener(){
+                @Override
+                public void onAdLoaded() {
+                    super.onAdLoaded();
+                }
+
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+                    mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                    /* Create an Intent that will start the Menu-Activity. */
+                    redriectToActivity(view,element);
+
+                }
+
+                @Override
+                public void onAdFailedToLoad(int i) {
+                    super.onAdFailedToLoad(i);
+                    /* Create an Intent that will start the Menu-Activity. */
+                    redriectToActivity(view,element);
+
+                }
+            });
+        }
+        else{
+            redriectToActivity(view,element);
+        }
+    }
+    private void redriectToActivity(View view, Element element){
+         final int TYPE_VIDEO = 1;
+        Intent intent = null;
+        if(element.getTypeData() == TYPE_VIDEO){
+            intent = new Intent (view.getContext(), ViewVideoElementActivity.class);
+            intent.putExtra("UrlDisplay",element.getUrl() );
+            intent.putExtra("NameContentVideo",element.getId() );
+            view.getContext().startActivity(intent);
+            return;
+        }
+        intent = new Intent (view.getContext(), ViewImageElementActivity.class);
+        intent.putExtra("UrlDisplay",element.getUrl() );
+        view.getContext().startActivity(intent);
+    }
+    private void addAds(Context mContext){
+        //add ads
+        MobileAds.initialize(mContext,
+                MainConstant.APP_ADS);
+        adView.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd = new InterstitialAd(mContext);
+        mInterstitialAd.setAdUnitId(MainConstant.XENKE_ADS);
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+
     }
 }

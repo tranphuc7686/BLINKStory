@@ -2,11 +2,12 @@ package com.example.blinkstory.presenter;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import com.google.android.material.appbar.AppBarLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import android.util.AttributeSet;
 import android.view.View;
 
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+
+import com.google.android.material.appbar.AppBarLayout;
 import com.example.blinkstory.R;
 
 import de.hdodenhof.circleimageview.CircleImageView;

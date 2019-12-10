@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.example.blinkstory"
+        applicationId "com.tranphuc.blinkstory"
         minSdkVersion 15
         targetSdkVersion 28
         versionCode 1
@@ -39,4 +39,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
     //
     implementation 'androidx.cardview:cardview:1.0.0'
+    // google ads
+    implementation 'com.google.android.gms:play-services-ads:18.2.0'
 }

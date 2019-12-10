@@ -2,47 +2,42 @@ package com.example.blinkstory;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
-import android.provider.MediaStore;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
+import android.provider.MediaStore;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.example.blinkstory.model.repository.DownloadFileAsynTask;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.example.blinkstory.constant.MainConstant;
 import com.example.blinkstory.presenter.DownloadFilePresenter;
 import com.example.blinkstory.view.IDownloadFileView;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdCallback;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.material.snackbar.Snackbar;
 import com.r0adkll.slidr.Slidr;
 import com.r0adkll.slidr.model.SlidrInterface;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -100,6 +95,11 @@ public class ViewVideoElementActivity extends AppCompatActivity implements IDown
     private ImageButton btnDownload;
     //process bar
     private ProgressBar mProgressBar;
+    //ads
+    private RewardedAd rewardedAd;
+    //video view
+    VideoView videoContent ;
+
 
 
     @Override
@@ -147,9 +147,58 @@ public class ViewVideoElementActivity extends AppCompatActivity implements IDown
     private void blindListenerUi() {
         final IDownloadFileView mIDownloadFileView = this;
         btnDownload.setOnClickListener(new View.OnClickListener() {
+            boolean isEarn = false;
             @Override
             public void onClick( View view) {
-               downloadVideo();
+                videoContent.pause();
+                //funciton show ads
+                if (rewardedAd.isLoaded()) {
+                    Activity activityContext = ViewVideoElementActivity.this;
+                    RewardedAdCallback adCallback = new RewardedAdCallback() {
+                        @Override
+                        public void onRewardedAdOpened() {
+                            // Ad opened.
+                        }
+
+                        @Override
+                        public void onRewardedAdClosed() {
+                            if(!isEarn){
+                                Snackbar.make(getWindow().getDecorView().getRootView(), "Download failed !! ", Snackbar.LENGTH_INDEFINITE)
+                                        .setAction("DISMISS", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                            }
+                                        }).show();
+
+                            }
+                            videoContent.start();
+                            // Ad closed.
+                            rewardedAd = createAndLoadRewardedAd() ;
+                        }
+
+                        @Override
+                        public void onUserEarnedReward(@NonNull RewardItem reward) {
+                            isEarn = true;
+                            // User earned reward.
+                            //funciton download data
+                            downloadVideo();
+                        }
+
+                        @Override
+                        public void onRewardedAdFailedToShow(int errorCode) {
+                            // Ad failed to display
+                        }
+                    };
+                    rewardedAd.show(activityContext, adCallback);
+                } else {
+                    Snackbar.make(getWindow().getDecorView().getRootView(), "Download failed, check your internet !! ", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("DISMISS", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                }
+                            }).show();
+                }
+
 
             }
             private void downloadVideo() {
@@ -186,11 +235,12 @@ public class ViewVideoElementActivity extends AppCompatActivity implements IDown
         hideSystemUI();
         //new acti
         slidr = Slidr.attach(this);
-        VideoView videoContent = (VideoView) mContentView;
+        videoContent = (VideoView) mContentView;
         videoContent.setVideoPath(getIntentData());
         videoContent.start();
         btnDownload = (ImageButton)findViewById(R.id.btnDownloadVideo);
         mProgressBar = (ProgressBar)findViewById(R.id.spinner_loading_view_element);
+        addAds();
 
     }
     private String getIntentData(){
@@ -242,5 +292,25 @@ public class ViewVideoElementActivity extends AppCompatActivity implements IDown
      * Schedules a call to hide() in delay milliseconds, canceling any
      * previously scheduled calls.
      */
+    private void addAds() {
+        MobileAds.initialize(this, MainConstant.APP_ADS);
+        this.rewardedAd = createAndLoadRewardedAd();
+    }
+    public RewardedAd createAndLoadRewardedAd() {
+        RewardedAd rewardedAd = new RewardedAd(this,
+                MainConstant.TRATHUONG_ADS);
+        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
+            @Override
+            public void onRewardedAdLoaded() {
+                // Ad successfully loaded.
+            }
 
+            @Override
+            public void onRewardedAdFailedToLoad(int errorCode) {
+                // Ad failed to load.
+            }
+        };
+        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
+        return rewardedAd;
+    }
 }
