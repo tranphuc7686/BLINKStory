@@ -126,7 +126,7 @@
         app:finalXPosition="@dimen/spacing_small"
         app:finalYPosition="@dimen/spacing_small"
         app:finalToolbarHeight="?attr/actionBarSize"
-        app:layout_behavior="com.example.blinkstory.presenter.AvatarImageBehavior"
+        app:layout_behavior="com.example.blinkstory.ulti.AvatarImageBehavior"
         />
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

@@ -22,4 +22,14 @@
     <string name="menu_item_search">dasd</string>
 
     <string name="title_activity_view_video_element">ViewVideoElementActivity</string>
+    <!--    new-->
+    <string name="check_connection">Please ! Check your connection</string>
+    <string name="upload_success">Upload success !!</string>
+    <string name="download_success">Download success !!</string>
+    <string name="load_backgound_detail_failed">Failed to load image !!</string>
+    <string name="download_wallpaper_failed">Download wallpaper failed, Check your internet !! </string>
+    <string name="set_wallpaper_failed">Set wallpaper failed, Check your internet !!  </string>
+    <string name="download_video_failed">Download video failed, Check your internet !!  </string>
+    <!--ads-->
+    <string name="load_ads_failed">Failed to load ads !!  </string>
 </resources>

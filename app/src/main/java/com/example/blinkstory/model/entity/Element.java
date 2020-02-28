@@ -1,60 +1,62 @@
 package com.example.blinkstory.model.entity;
 
-public class Element {
-    private String Id ;
-    private String Caption ;
-    private String Url ;
-    private int TypeData ;
-    private String SrcThumbail ;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-    public Element() {
+import com.squareup.moshi.Json;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class Element implements Parcelable {
+    @Json(name = "Id")
+    private String id ;
+    @Json(name = "Caption")
+    private String caption ;
+    @Json(name = "Url")
+    private String url ;
+    @Json(name = "TypeData")
+    private int typeData ;
+    @Json(name = "SrcThumbail")
+    private String srcThumbail ;
+
+    protected Element(Parcel in) {
+        id = in.readString();
+        caption = in.readString();
+        url = in.readString();
+        typeData = in.readInt();
+        srcThumbail = in.readString();
     }
 
-    public Element(String id, String caption, String url, int typeData, String srcThumbail) {
-        Id = id;
-        Caption = caption;
-        Url = url;
-        TypeData = typeData;
-        SrcThumbail = srcThumbail;
+    public static final Creator<Element> CREATOR = new Creator<Element>() {
+        @Override
+        public Element createFromParcel(Parcel in) {
+            return new Element(in);
+        }
+
+        @Override
+        public Element[] newArray(int size) {
+            return new Element[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
-    public String getId() {
-        return Id;
-    }
-
-    public void setId(String id) {
-        Id = id;
-    }
-
-    public String getCaption() {
-        return Caption;
-    }
-
-    public void setCaption(String caption) {
-        Caption = caption;
-    }
-
-    public String getUrl() {
-        return Url;
-    }
-
-    public void setUrl(String url) {
-        Url = url;
-    }
-
-    public int getTypeData() {
-        return TypeData;
-    }
-
-    public void setTypeData(int typeData) {
-        TypeData = typeData;
-    }
-
-    public String getSrcThumbail() {
-        return SrcThumbail;
-    }
-
-    public void setSrcThumbail(String srcThumbail) {
-        SrcThumbail = srcThumbail;
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(id);
+        parcel.writeString(caption);
+        parcel.writeString(url);
+        parcel.writeInt(typeData);
+        parcel.writeString(srcThumbail);
     }
 }
